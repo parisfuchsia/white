@@ -1,119 +1,107 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { supabase } from '../supabaseClient.ts';
 import { useNavigate } from 'react-router-dom';
+
 const initialState = {
   loading: false,
-  cart: [],
-  checkoutDetail: {},
-  success: false,
-  products: [],
-  byDefault: false
+  transactions:[],
+  filteredTransactions:[],
+  barChartDetails: [],
+  isFilterOn: false
 }
 
-export const fetchCart = createAsyncThunk('fetchSession', async() => {
-  const { data } = await supabase
-  .from('cart')
-  .select('*');
- console.log({data});
- return data;
-})
-
-export const addToCart = createAsyncThunk('addToCart', async(getData) => {
-  await supabase
-  .from('cart')
-  .insert({
-    title: getData.title,
-    thumbnail: getData.thumbnail,
-    quantity: getData.quantity,
-    price: getData.price,
-    brand: getData.brand,
-    description: getData.description,
-    id: getData.id,
-    stock: getData.stock,
-    orderPlaced: getData.orderPlaced || false
-  })
-})
-
-export const fetchProducts = createAsyncThunk('fetchProducts', async(getSkip) => {
-   const respo = await fetch(`https://dummyjson.com/products?limit=10&skip=${getSkip === 0 ? 0 : getSkip*10}`);
-   const data = await respo.json();
-      return data;
-})
-
-export const searchProducts = createAsyncThunk('searchProducts', async(getQuery) => {
-  const respo = await fetch(`https://dummyjson.com/products/search?q=${getQuery}`);
-      const data = await respo.json();
- return data;
-})
-
-export const updateCart = createAsyncThunk('updateCart', async(getData) => {
-  await supabase
-  .from('cart')
-  .update({orderPlaced: true})
-  .eq('uuid', getData.uuid)
-})
-
-export const getProductsByCategory = createAsyncThunk('getProductsByCategory', async(getCategory) => {
-  const respo = await fetch(`https://dummyjson.com/products/category/${getCategory.toLowerCase()}`);
-  const data = await respo.json();
-  return data;
-})
-
-export const removeFromCart = createAsyncThunk('removeFromCart', async(getInfo) => {
-  await supabase
-  .from('cart')
-  .delete()
-  .eq(getInfo.type, getInfo.value);
-})
-
-const cartSlice = createSlice({
-  name: 'cart',
+const transactionSlice = createSlice({
+  name:'transac',
   initialState,
   reducers:{
-    Checkout : (state, action) => {
-      state.checkoutDetail = action.payload
+    fetchHistoryList : (state) => {
+    const savedTransactions = JSON.parse(localStorage.getItem('transactions'));
+    if(savedTransactions){
+      state.transactions = savedTransactions || [];
+    }
+    state.filteredTransactions = [];
+    state.isFilterOn = false;
     },
-    Reset : (state) => {
-      state.checkoutDetail = {}
+    addTransactions : (state, action) => {
+      localStorage.setItem('transactions', JSON.stringify(action.payload));
+      state.filteredTransactions = [];
     },
-    setSuccess : (state, action) => {
-      state.success = action.payload;
+    fetchByFilter : (state, action) => {
+      let container = state.filteredTransactions
+      const items = JSON.parse(localStorage.getItem('transactions'));
+      
+      if(action.payload.type.length > 0 && action.payload.tags.length > 0){
+        container = items.filter(item => 
+        item.type === action.payload.type && 
+        item.tags.some(tag => action.payload.tags.includes(tag))
+        );
+      }else if(action.payload.type.length > 0){
+        container = items.filter(item => 
+        item.type === action.payload.type)
+      }else{
+         container = items.filter(item => 
+        item.tags.some(tag => action.payload.tags.includes(tag)))
+      }
+      state.filteredTransactions = container || []
+      state.isFilterOn = true
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(fetchCart.pending, (state) => {
-      state.loading = true;
-    })
-    builder.addCase(fetchCart.fulfilled, (state, action) => {
-      state.cart = action.payload || []
-      state.loading = false;
-    })
-    builder.addCase(fetchProducts.pending, (state, action) => {
-      state.loading = true;
-    })
-    builder.addCase(fetchProducts.fulfilled, (state, action) => {
-      state.products = action.payload || [];
-      state.byDefault = true;
-      state.loading = false;
-    })
-    builder.addCase(searchProducts.pending, (state, action) => {
-      state.loading = true;
-    })
-    builder.addCase(searchProducts.fulfilled, (state, action) => {
-      state.products = action.payload || [];
-      state.byDefault = false;
-      state.loading = false;
-    })
-    builder.addCase(getProductsByCategory.pending, (state, action) => {
-      state.loading = true;
-    })
-    builder.addCase(getProductsByCategory.fulfilled, (state, action) => {
-      state.products = action.payload || [];
-      state.byDefault = false;
-      state.loading = false;
-    })
+    fetchToday : (state, action) => {
+      const today = new Date();
+      
+      const savedItems = JSON.parse(localStorage.getItem('transactions'));
+      
+      if(!savedItems){
+        return;
+      }
+      
+      const todayItems = savedItems.filter(item => item.date === `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`);
+      
+      state.barChartDetails = todayItems;
+    },
+    fetchThisMonth : (state) => {
+      const today = new Date();
+      
+      const savedItems = JSON.parse(localStorage.getItem('transactions'));
+      if(!savedItems){
+        return;
+      }else{
+        const thisMonthItems = savedItems.filter(item => {
+          const [year, month, date] = item.date.split("-").map(Number);
+          return year === today.getFullYear() && month === today.getMonth() + 1;
+        })
+        state.barChartDetails = thisMonthItems;
+        console.log({thisMonthItems});
+      }
+    },
+    fetchAllTime: (state) => {
+      const savedItems = JSON.parse(localStorage.getItem('transactions'));
+      state.barChartDetails = savedItems;
+    },
+    fetchThisWeek : (state) => {
+      const today = new Date()
+      const savedItems = JSON.parse(localStorage.getItem('transactions'));
+      if(savedItems.length > 0){
+        const itemsThisWeek = savedItems.filter(item => {
+          const [year, month, date] = item.date.split("-").map(Number);
+          const startOfWeek = today.getDate() - today.getDay();
+          const endOfWeek = (today.getDate() - today.getDay()) + 6;
+          console.log({startOfWeek, endOfWeek});
+          return year === today.getFullYear() && month === today.getMonth() + 1 && date <= endOfWeek && date >= startOfWeek
+        })
+        state.barChartDetails = itemsThisWeek;
+        console.log({itemsThisWeek})
+      }else{
+        return;
+      }
+    },
+    removeFilter : (state) => {
+      state.filteredTransactions = [];
+      state.isFilterOn = false;
+      
+    }
   }
 })
 
-export default cartSlice.reducer;
-export const { Checkout, Reset, setSuccess } = cartSlice.actions;
+export default transactionSlice.reducer;
+export const { fetchHistoryList, addTransactions, fetchByFilter, fetchToday, fetchThisMonth, fetchAllTime, fetchThisWeek, removeFilter } = transactionSlice.actions;
+

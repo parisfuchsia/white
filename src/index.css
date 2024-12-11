@@ -4,13 +4,28 @@
   
 @layer components {
   .btn {
-    @apply py-2 px-3 rounded-lg shadow-lg active:opacity-60 transition-all min-w-20 max-h-10;
+    @apply py-2 px-3 flex justify-center items-center rounded-lg shadow-md active:opacity-60 transition-all min-w-20 max-h-10 transition-all;
+  }
+  .brdr {
+    @apply border-[1px] border-gray-800 
+  }
+  .act{
+    @apply active:opacity-50
+  }
+  .plainbtn{
+    @apply px-3 py-2 rounded-lg  active:opacity-50 flex items-center justify-center truncate
+  }
+  .responsiveGrid {
+    @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6
   }
   .input{
     @apply py-2 px-3 rounded-lg shadow-lg focus:outline-none
   }
   .card{
     @apply p-5 rounded-lg shadow-lg flex flex-col gap-3 
+  }
+  *{
+    @apply transition-colors duration-300
   }
 }
 
