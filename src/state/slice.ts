@@ -27,7 +27,7 @@ const transactionSlice = createSlice({
       state.filteredTransactions = [];
     },
     fetchByFilter : (state, action) => {
-      let container = state.filteredTransactions
+      let container = state.filteredTransactions || [];
       const items = JSON.parse(localStorage.getItem('transactions'));
       
       if(action.payload.type.length > 0 && action.payload.tags.length > 0){
@@ -56,7 +56,7 @@ const transactionSlice = createSlice({
       
       const todayItems = savedItems.filter(item => item.date === `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`);
       
-      state.barChartDetails = todayItems;
+      state.barChartDetails = todayItems || [];
     },
     fetchThisMonth : (state) => {
       const today = new Date();
@@ -69,30 +69,29 @@ const transactionSlice = createSlice({
           const [year, month, date] = item.date.split("-").map(Number);
           return year === today.getFullYear() && month === today.getMonth() + 1;
         })
-        state.barChartDetails = thisMonthItems;
-        console.log({thisMonthItems});
+        state.barChartDetails = thisMonthItems || [];
+        
       }
     },
     fetchAllTime: (state) => {
       const savedItems = JSON.parse(localStorage.getItem('transactions'));
-      state.barChartDetails = savedItems;
+      state.barChartDetails = savedItems || [];
     },
     fetchThisWeek : (state) => {
       const today = new Date()
       const savedItems = JSON.parse(localStorage.getItem('transactions'));
-      if(savedItems){
+      if(!savedItems){
+        return 
+      }
         const itemsThisWeek = savedItems.filter(item => {
           const [year, month, date] = item.date.split("-").map(Number);
           const startOfWeek = today.getDate() - today.getDay();
           const endOfWeek = (today.getDate() - today.getDay()) + 6;
-          console.log({startOfWeek, endOfWeek});
           return year === today.getFullYear() && month === today.getMonth() + 1 && date <= endOfWeek && date >= startOfWeek
         })
-        state.barChartDetails = itemsThisWeek;
-        console.log({itemsThisWeek})
-      }else{
-        return;
-      }
+      
+        state.barChartDetails = itemsThisWeek || [];
+        
     },
     removeFilter : (state) => {
       state.filteredTransactions = [];
