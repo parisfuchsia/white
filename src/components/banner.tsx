@@ -49,7 +49,7 @@ export default function Banner(){
         theme === "light" ? <MdDarkMode onClick = {() => handleChangeTheme('dark')
         } className = 'text-teal-400' size = "18" /> : <MdOutlineDarkMode onClick = {() => handleChangeTheme('light')} className = 'text-teal-400'  size = "18"/>
       }</div>
-            <p className = 'dark:text-neutral-100 underline flex items-center gap-1'onClick = {() => setIsConfirmOpen(true)} ><GrPowerReset className = 'text-gray-800 dark:text-neutral-100' />Reset</p>
+            <p className = 'dark:text-neutral-100 underline flex items-center gap-1'onClick = {() => setIsConfirmOpen(true)} ><GrPowerReset className = 'text-gray-800 dark:text-neutral-100' />Rehahaet</p>
     </div>
   </motion.div>
 }
