@@ -80,7 +80,7 @@ const transactionSlice = createSlice({
     fetchThisWeek : (state) => {
       const today = new Date()
       const savedItems = JSON.parse(localStorage.getItem('transactions'));
-      if(savedItems.length > 0){
+      if(savedItems){
         const itemsThisWeek = savedItems.filter(item => {
           const [year, month, date] = item.date.split("-").map(Number);
           const startOfWeek = today.getDate() - today.getDay();
