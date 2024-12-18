@@ -92,7 +92,7 @@ export default function History({parent, child}){
   }, [open])
   
   const totalReducer = (target) => {
-    if(barChartDetails.length > 0){
+    if(barChartDetails?.length > 0){
       return barChartDetails.reduce((total, next) => {
         return next.type === target ? parseFloat(next.amount) + total : total;
       }, 0)
